@@ -68,13 +68,13 @@ Combine the two, send prompt to LLM, get response
 > LangChain Developers encourage using it as a wrapper around an LLM.
 - Install langchain-openai library
 
-    pip install langchain-openai
+        $ pip install langchain-openai
 
 -  Check the documentation for LangChain to see the list of supported LLMs
 - Prompt Templates: Fills in parts of the promptfor the LLM
 - Construct a chain using LangChain Expression Language
     > 
-    >   cat readme.txt | wc
+    >       $ cat readme.txt | wc
     > 
     > Similar to this command
 
@@ -83,15 +83,15 @@ Combine the two, send prompt to LLM, get response
 
 > **Inspecting the Inputs and Outputs**
 >   
->   print(prompt.output_shema)
->   print(llm.input_schema)
+>       print(prompt.output_shema)
+>       print(llm.input_schema)
 >
 
 - for streaming
 
-    result = chain.stream({"user_input": user_input})
-    for chunk in result:
-        print(chunk, end=' ')
+        result = chain.stream({"user_input": user_input})
+        for chunk in result:
+            print(chunk, end=' ')
 
 4. LLama-Index
 
@@ -116,15 +116,18 @@ This is called the ***Retrieval-Augmented Generation (RAG)***: Technique for com
 
 - **Debugging LangChain**
 
-    from langchain.globals import set_debug, set_verbose
-    set_debug(True)
-    set_verbose(True)
+        from langchain.globals import set_debug, set_verbose
+        
+        set_debug(True)
+        set_verbose(True)
 
 - **Debugging LLama-Index**
+
     - Works well with standard Python logging
     - Various functions and constructors accept a verbose=True parameter
 
 - **Beware the \*\*kwargs**
+
     Both langchain llamaindex make use of \*\*kwargs arguments, where a Python dictionary is used instead of strongly typed arguments
 
 ## Combine LLMs and Indexes to Query Local Documents
