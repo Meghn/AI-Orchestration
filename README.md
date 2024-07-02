@@ -5,15 +5,18 @@ My exploration of LLMs with Lang Chain and LLaMa-Index
 ### Basic Installation Setup
 
 The following commands set up the virtual environment
+
     $ python3.11 -m venv .venv
     $ source .venv/bin/activate
 
 Installing the necessary libraries
+
     (.venv) $ pip3 install openai
     (.venv) $ pip3 install langchain
     (.venv) $ pip3 install llama-index
 
 To update the outdated packages
+
     (.venv) $ pip3 install --upgrade (name of the package)
 
 Get the OpenAI API key from: https://platform.openai.com/api-keys
@@ -59,6 +62,32 @@ The first App:
 
     3.LangChain
     > LangChain Developers encourage using it as a wrapper around an LLM.
+        - Install langchain-openai library
+
+            pip install langchain-openai
         
+        -  Check the documentation for LangChain to see the list of supported LLMs
+        - Prompt Templates: Fills in parts of the promptfor the LLM
+        - Construct a chain using LangChain Expression Language
+            > 
+            >   cat readme.txt | wc
+            > 
+            > Similar to this command
+
+            chain = prompt | llm | StrOutputParser()
+            result = chain.invoke({"user_input": user_input})
         
+        > **Inspecting the Inputs and Outputs**
+        >   
+        >   print(prompt.output_shema)
+        >   print(llm.input_schema)
+        >
+    
+        - for streaming
+
+            result = chain.stream({"user_input": user_input})
+            for chunk in result:
+                print(chunk, end=' ')
+        
+    
 
