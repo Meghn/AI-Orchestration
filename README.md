@@ -45,5 +45,20 @@ The first App:
         >       - Trained and fine-tuned on instruction response pairs
         >       - Not optimized for multi-turn conversations, but may still be capable.
 
+    2. Running Local LLMs
+        1. Install the LM Studio: Desktop app 
+        2. Search and Download "una cybertron" model at Q6_K quantization
+        3. Locate the model card for this model; find the Prompt template setting
+        4. Load the model into memory and examine LM Studio settings.
+        5. Chat with the model to get a feel for it
+        6. Download a second model with different quantization level and compare
+        We have to give the base URL in the file while initializing our openai object and also make sure that we started the server
+        > **Not for Production Use!**
+        > - LM Studio is great for developement and experimentation, but it's not bulletproof
+        > - To serve a local model in production, you'll need a different inference server
+
+    3.LangChain
+    > LangChain Developers encourage using it as a wrapper around an LLM.
+        
         
 

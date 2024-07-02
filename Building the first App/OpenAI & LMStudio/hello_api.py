@@ -6,8 +6,8 @@ from openai import OpenAI # version 1.0+
 # export OPENAI_API_KEY=your-secret-api-key
 llm = OpenAI(
     # place your OpenAI key in an environment variable
-    # api_key=os.environ['OPENAI_API_KEY'], # this is the default
-    #base_url="http://localhost:1234/v1"  # see chapter 1 video 3
+    # api_key="lm-studio", # os.environ['OPENAI_API_KEY'], # this is the default
+    base_url="http://localhost:1234/v1"  # see chapter 1 video 3
 )
 
 system_prompt = """Given the following short description
@@ -21,7 +21,7 @@ user_input = """AI Orchestration with LangChain and LlamaIndex
 
 # Call the API and get the response
 response = llm.chat.completions.create(
-    model="gpt-3.5-turbo",
+    model="gpt-3.5-turbo", # This will get ignored when we use the local model
     max_tokens=500, # maximum number of tokens we want returned
     temperature=0.7, # 0 gives same response everytime, closer to 1 more random
     messages=[
