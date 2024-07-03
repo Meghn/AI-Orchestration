@@ -200,6 +200,7 @@ Hence we use RAG
     ***LlamaIndex was practically built around the use case of RAG.***
 
 2. RAG with LLamaIndex
+
     LlamaIndex is really in its happy place when we're indexing documents.
 
         index = VectorStoreIndex(documents)
@@ -210,7 +211,7 @@ Hence we use RAG
     You want to be able to choose your own embedding and LLM. So we're going to use a longer form here, one that lets us plug in different pieces in a service context.
 
 
-    1. Set up ==ServiceContext== and embed model
+    1. Set up <mark>ServiceContext</mark> and embed model
 
        A **service context** is like a switchboard operator for AI telling our app what to use for different components, including embedding, embedding store, or even the LLM itself. We'll use this feature to plug in a local embedding chosen from Hugging Face, as well as continue to use the locally served model-compatible with the OpenAI API. 
         ```
@@ -234,19 +235,19 @@ Hence we use RAG
         Settings.chunk_overlap = 64
         Settings.embed_model = embed_model
         ```
-    2. Use ==SimpleDirectoryReader== or another reader to obtain documents.
+    2. Use <mark>SimpleDirectoryReader</mark> or another reader to obtain documents.
 
        When it comes to reading the documents, we use **SimpleDirectoryReader**. It follows the chunk size and chunk overlap settings, and it supports a huge range of data formats, including _CSV, Microsoft Word, Jupyter Notebooks, PDF, PowerPoint, Markdown, and others_.
         ```
         documents = SimpleDirectoryReader(args.docs_dir).load_data()
         ```
-    3. Populate ==VectorStoreIndex==
+    3. Populate <mark>VectorStoreIndex</mark>
 
        The default **vector store** will hold all the resulting document chunks.
         ```
         vector_store = VectorStoreIndex.from_documents(documents)
         ```
-    4. Create ==retriever==
+    4. Create <mark>retriever</mark>
 
        Once we have a vector store set up, we can create a **retriever** 
         ```
@@ -258,7 +259,7 @@ Hence we use RAG
        and from that, create a context chat engine. 
         ```
 
-    5. Create ==ContextChatEngine==
+    5. Create <mark>ContextChatEngine</mark>
 
         chat_engine = ContextChatEngine.from_defaults(
             retriever=retriever,
@@ -279,5 +280,8 @@ Hence we use RAG
     >pip install torch
     >```
 
+    ***Go through LLamaIndex Documentation or LLama Hub***
     
-
+    We're using simple directory reader to read local files, but beyond just documents, you can also talk to GitHub or Wikipedia, Jira databases, and lots more. 
+    
+    > One quick warning for this code. What you see here does not have any change detection in it. So once the documents are indexed, that's what's in the index. And even if the documents change, it's not going to go back and reindex them.
