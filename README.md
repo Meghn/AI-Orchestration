@@ -207,7 +207,7 @@ Hence we use RAG
         query_engine = index.as_query_engine()
         response = query_engine.query("Who was Shakespeare's wife?")
     ```
-    
+
     Instead of calling query_engine.query, we could have also called as chat engine. 
     You want to be able to choose your own embedding and LLM. So we're going to use a longer form here, one that lets us plug in different pieces in a service context.
 
@@ -353,3 +353,37 @@ Hence we use RAG
    ```
 
    ***This doesn't detect any file changes after indexing.*** 
+
+### Document Summarization
+
+One feature that can be paired with RAG is summarization. Write a simple app to take a single or multi-part document in the directory.  We'll use LlamaIndex for this.
+1. Fill in the prompt in the startar file along the lines of "Summarize the following document". Tweak this prompt to get the desired granularity and results.
+
+```python
+application_prompt = """<insert summarization prompt here>
+
+    DOCUMENT:
+"""
+```
+SOLUTION: 
+```python
+application_prompt = """Given the following documents,
+    summarize them so that each section contains only the most
+    important information and relevant facts:
+
+    DOCUMENT:
+"""
+```
+2. Write code to process the results of calling *load_data()* on the **SimpleDirectoryReader**. Combine all files into one long string.
+
+```python
+fulltext = "<join together docs into one string>"
+```
+SOLUTION:
+```python
+fulltext = "\n\n".join([d.get_text() for d in documents])
+```
+
+> If we need to summarize documents, especially on the input side of a RAG app, we need to think about broader application and data integration ideas.
+
+## Multi-Step AI Workflows with Chaining
