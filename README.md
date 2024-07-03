@@ -202,10 +202,11 @@ Hence we use RAG
 2. RAG with LLamaIndex
 
     LlamaIndex is really in its happy place when we're indexing documents.
-
+    ```python
         index = VectorStoreIndex(documents)
         query_engine = index.as_query_engine()
         response = query_engine.query("Who was Shakespeare's wife?")
+    ```
     
     Instead of calling query_engine.query, we could have also called as chat engine. 
     You want to be able to choose your own embedding and LLM. So we're going to use a longer form here, one that lets us plug in different pieces in a service context.
@@ -214,7 +215,7 @@ Hence we use RAG
     1. Set up <mark>ServiceContext</mark> and embed model
 
        A **service context** is like a switchboard operator for AI telling our app what to use for different components, including embedding, embedding store, or even the LLM itself. We'll use this feature to plug in a local embedding chosen from Hugging Face, as well as continue to use the locally served model-compatible with the OpenAI API. 
-        ```
+        ```python
         from llama_index.core import (load_index_from_storage, 
                                         set_global_service_context)
         from llama_index import ServiceContext
@@ -227,7 +228,7 @@ Hence we use RAG
         set_global_service_context(service_context)
         ```
        But latest code is to do it via **Settings**
-        ```
+        ```python
         from llama_index.core import ( Settings,
                                         load_index_from_storage)
         Settings.llm = llm
@@ -238,37 +239,37 @@ Hence we use RAG
     2. Use <mark>SimpleDirectoryReader</mark> or another reader to obtain documents.
 
        When it comes to reading the documents, we use **SimpleDirectoryReader**. It follows the chunk size and chunk overlap settings, and it supports a huge range of data formats, including _CSV, Microsoft Word, Jupyter Notebooks, PDF, PowerPoint, Markdown, and others_.
-        ```
+        ```python
         documents = SimpleDirectoryReader(args.docs_dir).load_data()
         ```
     3. Populate <mark>VectorStoreIndex</mark>
 
        The default **vector store** will hold all the resulting document chunks.
-        ```
+        ```python
         vector_store = VectorStoreIndex.from_documents(documents)
         ```
     4. Create <mark>retriever</mark>
 
        Once we have a vector store set up, we can create a **retriever** 
-        ```
+        ```python
         retriever = VectorIndexRetriever(vector_store)
         query_engine = RetrieverQueryEngine.from_args(
                             retriever=retriever
                         )
         ```
        and from that, create a context chat engine. 
-        ```
 
     5. Create <mark>ContextChatEngine</mark>
-
+       ```python
         chat_engine = ContextChatEngine.from_defaults(
             retriever=retriever,
             query_engine=query_engine,
             verbose=True
         )
-        ```
+       ```
+    
     With one line of code, we can call chat_repl, that's read eval print loop, 
-    ```
+    ```python
     chat_engine.chat_repl()
     ```
     and that gives us a bare-bones chat interface. In other words, now we're into interactive conversation mode.
@@ -285,3 +286,70 @@ Hence we use RAG
     We're using simple directory reader to read local files, but beyond just documents, you can also talk to GitHub or Wikipedia, Jira databases, and lots more. 
     
     > One quick warning for this code. What you see here does not have any change detection in it. So once the documents are indexed, that's what's in the index. And even if the documents change, it's not going to go back and reindex them.
+
+3. RAG with LangChain
+   
+   There are a lot of ways to accomplish the use case of RAG with LangChain, But the Zen of Python says there should be one and preferably only one obvious way to do it. But LangChain gives us options.
+
+   Naturally we'll use a chain, pre-built one instead of constructing it from LCEL. 
+
+   The structure of our LAngChain app looks a lot like the LLamaIndex one we previously built. One difference is that we're using **sentence transformer embeddings**. 
+   ```python
+    pip install sentence_transformers
+    embedding = SentenceTransformerEmbeddings(model_name="all-mpnet-base-v2")
+   ```
+   And we're specifying an explicit **vector store** using **FAISS** for meta.
+   ```python
+    vectorstore = FAISS.from_documents(frags, embedding)
+   ```
+   A class called **Recursive Character Text Splitter** chops up our documents. Play with the chunk size and chunk overlap settings a bit to get good search results
+   ```python
+   text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=500,
+            chunk_overlap=75
+        )
+   ```
+   Another key difference is how we load a directory full of files. LangChain doesn't have a foolproof way to just load a directory of mixed types. Here we're specificying DOCX through the glob parameter, which selects which files to read, and then the document loader class of DOCX to text loader.
+   ```python
+   loader = DirectoryLoader(args.docs_dir,
+            loader_cls=Docx2txtLoader, # Docx2txtLoader
+            recursive=True,
+            silent_errors=True,
+            show_progress=True,
+            glob="**/*.docx"  # which files get loaded
+        )
+   docs = loader.load()
+   ```
+   If we wanted to process many different kinds of files, a straightforward approach might be to call directory loader multiple times with different settings, particularly the wildcard passed into the glob parameter and a different document loader. Another approach might be to pre-process the documents into HTML or markdown and work from there.
+
+   This code uses explicit memory for the overall chat using the **conversational buffer memory** class. Each item stored in memory is tagged with an identifier under which it appends accumulated messages. And here we're using "chat history" for that key.
+   ```python
+   memory = ConversationBufferMemory(
+        memory_key="chat_history",
+        return_messages=True
+   )
+   memory.load_memory_variables({})
+   ```
+   The actual chat engine, here a **conversational retrieval chain**. This pre-built chain summarizes the query to work better in limited context windows and with longer chat sessions. 
+   ```python
+   qa_chain = ConversationalRetrievalChain.from_llm(
+        llm=llm,
+        memory=memory,
+        retriever=vectorstore.as_retriever()
+   )
+   ```
+   There's no single function to call to provide a chat like **REPL** interface, so we roll our own in a while loop. For each conversational turn, both from the human side and from the AI side, we store the message in our memory class.
+   ```python
+   # Start a REPL loop
+   while True:
+        user_input = input("Ask a question. Type 'exit' to quit.\n>")
+        if user_input=="exit":
+            break
+        memory.chat_memory.add_user_message(user_input)
+        result = qa_chain({"question": user_input})
+        response = result["answer"]
+        memory.chat_memory.add_ai_message(response)
+        print("AI:", response)
+   ```
+
+   ***This doesn't detect any file changes after indexing.*** 
