@@ -387,3 +387,105 @@ fulltext = "\n\n".join([d.get_text() for d in documents])
 > If we need to summarize documents, especially on the input side of a RAG app, we need to think about broader application and data integration ideas.
 
 ## Multi-Step AI Workflows with Chaining
+
+So far, we've built small apps that work standalone. But here in the real world, we use AI to create components that exist within a larger app.
+
+If you have table style databases, well then you should use a database and talk to it in SQL. If you need business logic, then you know Java or Rust or Golang or even Python are going to be a far better option than running a full language model. 
+
+So your job as an AI application architect is to define which pieces make sense as conventional application components, and which pieces can use the full firepower of AI. 
+In other words, we need to focus on the connections between conventional software and AI software.  And this gets tricky when the fundamental data type of LLMs are unstructured strings.
+
+AI apps, and in particular the adoption of prose as its own programming language require us to think about the interface between components and applications. 
+AI orchestration frameworks are at the leading edge of addressing these concerns. Probably, the most common technique involves reliably getting LLM output into JSON for the rest of our app to consume.
+---
+The first technique we'll talk about is called **guided prompting**. If your prompt specifically requests a JSON response, and especially if you include an example, this will usually work, but not with 100 percent consistency across every possible model and configuration. 
+If your temperature setting is greater than zero, retrying a prompt will often fix incorrect JSON. And if your app has the flexibility, you can also request YAML. 
+
+**LangChain**
+
+```python
+prompt = """Write a weather report for a major city
+    in ten words or less.
+    Do not include any additional explanation.
+"""
+
+guided_prompt = prompt + """
+Return the result as JSON as follows:
+{ "city": "<CITY_NAME>",
+"report": "<BRIEF_REPORT>" }
+"""
+```
+
+**LlamaIndex**
+
+```python
+prompt = ChatMessage(
+    role="user",
+    content="""Write a weather report for a random city
+        in ten words or less.
+        Do not include any additional explanation.
+""")
+
+guided_prompt = ChatMessage(role="user", content=prompt.content + """
+Return the result as JSON as follows:
+{ "city": "<CITY_NAME>",
+"report": "<SHORT_REPORT>" }
+""")
+```
+
+Both LangChain and LlamaIndex make use of a third-party library called **Pydantic**. It's a useful module in its own right, and it makes it easy to convert back and forth between native Python objects and JSON.  
+
+We're defining a class named after our data type that we're interested in, and it inherits from base model. We put descriptions onto each field here. The LLM will actually use these descriptions to help figure out what goes where
+
+**LangChain**
+
+```python
+from langchain.output_parsers import PydanticOutputParser
+    from langchain.pydantic_v1 import BaseModel, Field
+
+    class WeatherReport(BaseModel):
+        city: str = Field(description="City name")
+        report: str = Field(description="Brief weather report")
+
+    parser = PydanticOutputParser(pydantic_object=WeatherReport)
+    #print(f"Parser instructions: {parser.get_format_instructions()}")
+
+    runnable_prompt = ChatPromptTemplate.from_messages(
+        [
+            SystemMessage(content=parser.get_format_instructions()),
+            HumanMessage(content=prompt)
+        ]
+    )
+    chain = runnable_prompt | chat | parser
+    py_obj = chain.invoke({})
+    print(py_obj.city, py_obj.report)
+```
+
+**LlammaIndex**
+
+```python
+from pydantic import BaseModel, Field
+    from llama_index.program.openai import OpenAIPydanticProgram
+
+    class WeatherReport(BaseModel):
+        "A concise weather report for a single city"
+        city: str = Field(description="City name")
+        report: str = Field(description="Brief weather report")
+
+    program = OpenAIPydanticProgram.from_defaults(
+        llm=chat,
+        output_cls=WeatherReport,
+        prompt_template_str=prompt.content,
+        verbose=True,
+    )
+    print(guided_prompt.content)
+    py_obj = program()
+    # Now a standard python obj
+    print(py_obj.city, py_obj.report)
+```
+***The guidance prompt that is emitted for the model to follow. Not every model can actually keep up with that.***
+
+There is one other thing you may have heard of called **JSON mode**. This is a way from the OpenAI API to ensure that the output gets formatted as JSON. 
+
+But there's a few problems with this. It can enforce that your results are valid JSON with all the curly brackets matching up and so forth, but _it does nothing to make sure the result matches the JSON schema you desire_. For example, the city field could be missing. In this regard, the Pydantic options we just showed, they are just better. 
+---
