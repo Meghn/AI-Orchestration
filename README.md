@@ -548,3 +548,73 @@ For Multi-turn cases, we need to use LangChain Agents
 
 ### Local LLM Task Offloading
 
+The function calling feature we learned about is specific to OpenAI APIs. <mark>Task offloading Functions execute on your local host</mark>
+
+1. Modifythe starter prompt to include a second command, one that matches the get_weather() function.
+
+```python
+# task offloading prompt
+system_prompt = """You are a helpful assistant.... in a subsequent conversational turn:
+
+"#TASK:TIME" to request the current time and date in a format like 2024-01-01T12:34
+
+Do not include any additional explanation ... without adding any additional explanation.
+
+Current conversation:
+{history}
+
+Human: {input}
+AI:"""
+```
+
+```python
+# task offloading prompt
+system_prompt = """You are a helpful assistant. ... in a subsequent conversational turn:
+
+"#TASK:TIME" to request the current time and date in a format like 2024-01-01T12:34
+"#TASK:WEATHER city" to request the current weather in a given city
+
+Do not include any additional explanation ... without adding any additional explanation.
+
+
+Current conversation:
+{history}
+
+Human: {input}
+AI:"""
+```
+
+2. Modify the main chat loop to be able to invoke Python functions based on a request from the LLM.
+
+```python
+#Start REPL loop
+    while True:
+        user_input = input("Ask a question. Type 'exit' to quit.\n>")
+        if user_input=="exit":
+            break
+        result = conversation.invoke({"input": user_input})
+        print(result)
+        response = result["response"].strip()
+        print("AI:", response)
+        if response.startswith("#TASK:"):
+            print("got a task offloading request...")
+            # task offloading
+```
+
+```python
+        if response.startswith("#TASK:"):
+            cmd = response[6:]
+            print(f"got a task offloading request.. {cmd}.")
+            
+            if cmd=="TIME":
+                observation = get_current_time()
+                print(f"observation: {observation}")
+            elif cmd.startswith("WEATHER "):
+                city = cmd[8:]
+                observation = get_weather(city)
+                print(f"observation: {observation}")
+            else:
+                print("Unknown task")
+                observation = None
+```
+
