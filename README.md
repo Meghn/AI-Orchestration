@@ -618,3 +618,88 @@ AI:"""
                 observation = None
 ```
 
+## Building Agents
+
+### ReAct Agent Framework
+
+**Agent** : In the LLM world, an agent is an interactive chatbot, acting on behalf of a user, that can make use of task offloading.
+
+ReAct Framework is not related to the React JS.
+
+- The 'Act' part is about taking actions or task offloading. 
+- The "RE" part is about reasoning, which, through clever prompting, adds a new dimension to the capabilities of LLMs and AI apps. In effect, it lets the AI think about a given problem, decide what needs to happen next, and take action accordingly. 
+
+REACT includes its own internal tracing, divided up into stages, which spell out "the thought process" inside the LLM.
+
+**ReAct Stages**:
+1. __Thought__: reasoning about the current situation and what needs to happen next.
+2. __Action__: task offloading
+3. __Observation__: evaluating results
+_The agent can go through multiple cycles of thought, action, observation at its own discretion._
+
+**ReAct Benefits**
+- Improved accuracy by reasoning in a coherent and consistent way with high-level planning.
+- Reduced hallucination and incorrect facts via feedback loop.
+- Improved transparency and interpretability by tracing steps toward a solution.
+
+### Implementing ReAct Agent
+
+- Get an API key at https://www.microsoft.com/en-us/bing/apis/bing-web-search-api
+
+- Put your key in the environment variable **BING_SUBSCRIPTION_KEY**.
+
+### Adding Tools to ReAct Agent
+
+1. Add a math tool to the LangChain agent.
+
+```python
+tools = [   
+    Tool(
+        name="Web Search",
+        func=BingSearchAPIWrapper().run,
+        description="useful for when you need to answer specific questions from information on the web",
+    )
+]
+```
+
+```python
+from langchain.chains import LLMMathChain
+
+tools = [   
+    Tool(
+        name="Web Search",
+        func=BingSearchAPIWrapper().run,
+        description="useful for when you need to answer specific questions from information on the web",
+    ),
+    Tool(
+        name="Math Calculator",
+        func=LLMMathChain.from_llm(llm),
+        description="useful for when you need to perform a mathematical calculation",
+    ),
+]
+```
+
+2. Add a test case to demonstrate math capabilities.
+
+```python
+pydict = agent.invoke({"input": "Hi, I am Bob"})
+print(pydict["output"])
+pydict = agent.invoke({"input": "What's my name?"})
+print(pydict["output"])
+pydict = agent.invoke({"input": "Who is the CEO of LinkedIn in 2023?"})
+print(pydict["output"])
+```
+
+```python
+pydict = agent.invoke({"input": "Hi, I am Bob"})
+print(pydict["output"])
+pydict = agent.invoke({"input": "What's my name?"})
+print(pydict["output"])
+pydict = agent.invoke({"input": "Who is the CEO of LinkedIn in 2023?"})
+print(pydict["output"])
+
+pydict = agent.invoke({"input": "What is 2*pi*10^2"})
+print(pydict["output"])
+```
+
+
