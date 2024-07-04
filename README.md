@@ -397,8 +397,10 @@ In other words, we need to focus on the connections between conventional softwar
 
 AI apps, and in particular the adoption of prose as its own programming language require us to think about the interface between components and applications. 
 AI orchestration frameworks are at the leading edge of addressing these concerns. Probably, the most common technique involves reliably getting LLM output into JSON for the rest of our app to consume.
+
 ---
-The first technique we'll talk about is called **guided prompting**. If your prompt specifically requests a JSON response, and especially if you include an example, this will usually work, but not with 100 percent consistency across every possible model and configuration. 
+
+The first technique we'll talk about is called <mark>**guided prompting**</mark>. If your prompt specifically requests a JSON response, and especially if you include an example, this will usually work, but not with 100 percent consistency across every possible model and configuration. 
 If your temperature setting is greater than zero, retrying a prompt will often fix incorrect JSON. And if your app has the flexibility, you can also request YAML. 
 
 **LangChain**
@@ -433,7 +435,7 @@ Return the result as JSON as follows:
 """)
 ```
 
-Both LangChain and LlamaIndex make use of a third-party library called **Pydantic**. It's a useful module in its own right, and it makes it easy to convert back and forth between native Python objects and JSON.  
+Both LangChain and LlamaIndex make use of a third-party library called <mark>**Pydantic**</mark>. It's a useful module in its own right, and it makes it easy to convert back and forth between native Python objects and JSON.  
 
 We're defining a class named after our data type that we're interested in, and it inherits from base model. We put descriptions onto each field here. The LLM will actually use these descriptions to help figure out what goes where
 
@@ -485,7 +487,64 @@ from pydantic import BaseModel, Field
 ```
 ***The guidance prompt that is emitted for the model to follow. Not every model can actually keep up with that.***
 
-There is one other thing you may have heard of called **JSON mode**. This is a way from the OpenAI API to ensure that the output gets formatted as JSON. 
+There is one other thing you may have heard of called <mark>**JSON mode**</mark>. This is a way from the OpenAI API to ensure that the output gets formatted as JSON. 
 
 But there's a few problems with this. It can enforce that your results are valid JSON with all the curly brackets matching up and so forth, but _it does nothing to make sure the result matches the JSON schema you desire_. For example, the city field could be missing. In this regard, the Pydantic options we just showed, they are just better. 
+
 ---
+
+<mark>LLM function calling</mark>
+
+**Task Offloading** : Extending the capabilities of an LLM by delegating tasks or information retrieval.
+
+**Remote Procedure Call** : Extension of the concept of local procedure(function) calls,  across network or other boundaries.
+
+**LlamaIndex**
+
+```python
+from llama_index.core.tools import FunctionTool
+
+def get_weather_for_city(city):
+    """Get the current weather in a given city"""
+    print(f"Calling local get_weather_for_city for {city}")
+    return json.dumps({"city": city, "temperature": random.randint(1,50)})
+
+llm = OpenAI(model="gpt-3.5-turbo-1106")
+tool = FunctionTool.from_defaults(fn=get_weather_for_city)
+agent = OpenAIAgent.from_tools([tool], llm=llm, verbose=True)
+response = agent.chat(
+    "What's the weather like in Miami?"
+)
+```
+Gives us multiple conversational turns.
+
+**LangChain**
+
+```python
+from langchain.chains.structured_output import create_openai_fn_runnable
+
+def get_weather_for_city(city: str):
+    """Get the current weather in a given city"""
+    print(f"Calling local get_weather_for_city for {city}")
+    return json.dumps({"city": city, "temperature": random.randint(1,50)})
+
+llm = ChatOpenAI(
+    temperature=0,
+    model="gpt-3.5-turbo-1106"
+)
+
+prompt = ChatPromptTemplate.from_messages(
+    [
+        ("human", "What's the weather like in {location}?"),
+    ]
+)
+
+chain = create_openai_fn_runnable([get_weather_for_city], llm, prompt)
+response = chain.invoke({"location": "Miami"})
+```
+Unlike LlamaIndex, the chain that we invoke provides only a single conversational turn. Hence the output is returned as a JSON.
+
+For Multi-turn cases, we need to use LangChain Agents
+
+### Local LLM Task Offloading
+
