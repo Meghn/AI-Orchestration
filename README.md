@@ -359,30 +359,30 @@ Hence we use RAG
 One feature that can be paired with RAG is summarization. Write a simple app to take a single or multi-part document in the directory.  We'll use LlamaIndex for this.
 1. Fill in the prompt in the startar file along the lines of "Summarize the following document". Tweak this prompt to get the desired granularity and results.
 
-```python
-application_prompt = """<insert summarization prompt here>
+    ```python
+    application_prompt = """<insert summarization prompt here>
 
-    DOCUMENT:
-"""
-```
-SOLUTION: 
-```python
-application_prompt = """Given the following documents,
-    summarize them so that each section contains only the most
-    important information and relevant facts:
+        DOCUMENT:
+    """
+    ```
+    SOLUTION: 
+    ```python
+    application_prompt = """Given the following documents,
+        summarize them so that each section contains only the most
+        important information and relevant facts:
 
-    DOCUMENT:
-"""
-```
+        DOCUMENT:
+    """
+    ```
 2. Write code to process the results of calling *load_data()* on the **SimpleDirectoryReader**. Combine all files into one long string.
 
-```python
-fulltext = "<join together docs into one string>"
-```
-SOLUTION:
-```python
-fulltext = "\n\n".join([d.get_text() for d in documents])
-```
+    ```python
+    fulltext = "<join together docs into one string>"
+    ```
+    SOLUTION:
+    ```python
+    fulltext = "\n\n".join([d.get_text() for d in documents])
+    ```
 
 > If we need to summarize documents, especially on the input side of a RAG app, we need to think about broader application and data integration ideas.
 
@@ -552,71 +552,71 @@ The function calling feature we learned about is specific to OpenAI APIs. <mark>
 
 1. Modifythe starter prompt to include a second command, one that matches the get_weather() function.
 
-```python
-# task offloading prompt
-system_prompt = """You are a helpful assistant.... in a subsequent conversational turn:
+    ```python
+    # task offloading prompt
+    system_prompt = """You are a helpful assistant.... in a subsequent conversational turn:
 
-"#TASK:TIME" to request the current time and date in a format like 2024-01-01T12:34
+    "#TASK:TIME" to request the current time and date in a format like 2024-01-01T12:34
 
-Do not include any additional explanation ... without adding any additional explanation.
+    Do not include any additional explanation ... without adding any additional explanation.
 
-Current conversation:
-{history}
+    Current conversation:
+    {history}
 
-Human: {input}
-AI:"""
-```
+    Human: {input}
+    AI:"""
+    ```
 
-```python
-# task offloading prompt
-system_prompt = """You are a helpful assistant. ... in a subsequent conversational turn:
+    ```python
+    # task offloading prompt
+    system_prompt = """You are a helpful assistant. ... in a subsequent conversational turn:
 
-"#TASK:TIME" to request the current time and date in a format like 2024-01-01T12:34
-"#TASK:WEATHER city" to request the current weather in a given city
+    "#TASK:TIME" to request the current time and date in a format like 2024-01-01T12:34
+    "#TASK:WEATHER city" to request the current weather in a given city
 
-Do not include any additional explanation ... without adding any additional explanation.
+    Do not include any additional explanation ... without adding any additional explanation.
 
 
-Current conversation:
-{history}
+    Current conversation:
+    {history}
 
-Human: {input}
-AI:"""
-```
+    Human: {input}
+    AI:"""
+    ```
 
 2. Modify the main chat loop to be able to invoke Python functions based on a request from the LLM.
 
-```python
-#Start REPL loop
-    while True:
-        user_input = input("Ask a question. Type 'exit' to quit.\n>")
-        if user_input=="exit":
-            break
-        result = conversation.invoke({"input": user_input})
-        print(result)
-        response = result["response"].strip()
-        print("AI:", response)
-        if response.startswith("#TASK:"):
-            print("got a task offloading request...")
-            # task offloading
-```
+    ```python
+    #Start REPL loop
+        while True:
+            user_input = input("Ask a question. Type 'exit' to quit.\n>")
+            if user_input=="exit":
+                break
+            result = conversation.invoke({"input": user_input})
+            print(result)
+            response = result["response"].strip()
+            print("AI:", response)
+            if response.startswith("#TASK:"):
+                print("got a task offloading request...")
+                # task offloading
+    ```
 
-```python
-        if response.startswith("#TASK:"):
-            cmd = response[6:]
-            print(f"got a task offloading request.. {cmd}.")
-            
-            if cmd=="TIME":
-                observation = get_current_time()
-                print(f"observation: {observation}")
-            elif cmd.startswith("WEATHER "):
-                city = cmd[8:]
-                observation = get_weather(city)
-                print(f"observation: {observation}")
-            else:
-                print("Unknown task")
-                observation = None
-```
+    ```python
+            if response.startswith("#TASK:"):
+                cmd = response[6:]
+                print(f"got a task offloading request.. {cmd}.")
+                
+                if cmd=="TIME":
+                    observation = get_current_time()
+                    print(f"observation: {observation}")
+                elif cmd.startswith("WEATHER "):
+                    city = cmd[8:]
+                    observation = get_weather(city)
+                    print(f"observation: {observation}")
+                else:
+                    print("Unknown task")
+                    observation = None
+    ```
 
 ## Building Agents
 
@@ -652,54 +652,54 @@ _The agent can go through multiple cycles of thought, action, observation at its
 
 1. Add a math tool to the LangChain agent.
 
-```python
-tools = [   
-    Tool(
-        name="Web Search",
-        func=BingSearchAPIWrapper().run,
-        description="useful for when you need to answer specific questions from information on the web",
-    )
-]
-```
+    ```python
+    tools = [   
+        Tool(
+            name="Web Search",
+            func=BingSearchAPIWrapper().run,
+            description="useful for when you need to answer specific questions from information on the web",
+        )
+    ]
+    ```
 
-```python
-from langchain.chains import LLMMathChain
+    ```python
+    from langchain.chains import LLMMathChain
 
-tools = [   
-    Tool(
-        name="Web Search",
-        func=BingSearchAPIWrapper().run,
-        description="useful for when you need to answer specific questions from information on the web",
-    ),
-    Tool(
-        name="Math Calculator",
-        func=LLMMathChain.from_llm(llm),
-        description="useful for when you need to perform a mathematical calculation",
-    ),
-]
-```
+    tools = [   
+        Tool(
+            name="Web Search",
+            func=BingSearchAPIWrapper().run,
+            description="useful for when you need to answer specific questions from information on the web",
+        ),
+        Tool(
+            name="Math Calculator",
+            func=LLMMathChain.from_llm(llm),
+            description="useful for when you need to perform a mathematical calculation",
+        ),
+    ]
+    ```
 
 2. Add a test case to demonstrate math capabilities.
 
-```python
-pydict = agent.invoke({"input": "Hi, I am Bob"})
-print(pydict["output"])
-pydict = agent.invoke({"input": "What's my name?"})
-print(pydict["output"])
-pydict = agent.invoke({"input": "Who is the CEO of LinkedIn in 2023?"})
-print(pydict["output"])
-```
+    ```python
+    pydict = agent.invoke({"input": "Hi, I am Bob"})
+    print(pydict["output"])
+    pydict = agent.invoke({"input": "What's my name?"})
+    print(pydict["output"])
+    pydict = agent.invoke({"input": "Who is the CEO of LinkedIn in 2023?"})
+    print(pydict["output"])
+    ```
 
-```python
-pydict = agent.invoke({"input": "Hi, I am Bob"})
-print(pydict["output"])
-pydict = agent.invoke({"input": "What's my name?"})
-print(pydict["output"])
-pydict = agent.invoke({"input": "Who is the CEO of LinkedIn in 2023?"})
-print(pydict["output"])
+    ```python
+    pydict = agent.invoke({"input": "Hi, I am Bob"})
+    print(pydict["output"])
+    pydict = agent.invoke({"input": "What's my name?"})
+    print(pydict["output"])
+    pydict = agent.invoke({"input": "Who is the CEO of LinkedIn in 2023?"})
+    print(pydict["output"])
 
-pydict = agent.invoke({"input": "What is 2*pi*10^2"})
-print(pydict["output"])
-```
+    pydict = agent.invoke({"input": "What is 2*pi*10^2"})
+    print(pydict["output"])
+    ```
 
-
+> ***Original Repository*** : https://github.com/LinkedInLearning/introduction-to-ai-orchestration-with-langchain-and-llamaindex-3820082/tree/main 
